@@ -17,6 +17,7 @@ db = mongoClient[MONGO_DB]
 collection = db[MONGO_COLLECTION]
 
 LOG = logging
+LOG.getLogger('pika').setLevel(LOG.INFO)
 LOG.basicConfig(
     level=LOG.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -62,8 +63,11 @@ def run_convert_task(data):
     filename = data.get('filename')
     resolution = data.get('resolution')
 
-    convert_video_resolution(video_id, filename, resolution)
-    update_video_resolution_in_db(video_id, filename, resolution)
+    convert_success = convert_video_resolution(video_id, filename, resolution)
+    if (convert_success):
+        update_video_resolution_in_db(video_id, filename, resolution)
+    else:
+        LOG.error(f'Error converting {filename} with {resolution} resolution')
 
 def callback(ch, method, properties, body):
     data = json.loads(body)
