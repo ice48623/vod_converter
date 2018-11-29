@@ -2,7 +2,6 @@
 from pymongo import MongoClient
 import os
 import subprocess
-import threading
 import pika
 import json
 import logging
@@ -41,7 +40,8 @@ def convert_video_resolution(video_id, filename, resolution):
 
     pixel_dimension = RESOLUTIONS.get(resolution)
     LOG.info(f'Converting {output_file}')
-    success = subprocess.call(['ffmpeg', '-i', input_file, '-vf', f'scale={pixel_dimension}', output_file])
+
+    success = subprocess.call(['./convert.sh', input_file, pixel_dimension, output_file])
     return success == 0
 
 def update_video_resolution_in_db(video_id, filename, resolution):
@@ -62,21 +62,17 @@ def run_convert_task(data):
     filename = data.get('filename')
     resolution = data.get('resolution')
 
-    update_video_resolution_in_db(video_id, filename, resolution)
     convert_video_resolution(video_id, filename, resolution)
+    update_video_resolution_in_db(video_id, filename, resolution)
 
 def callback(ch, method, properties, body):
     data = json.loads(body)
     run_convert_task(data)
     LOG.info(f'Finish converting video')
 
-def callback_thread(ch, method, properties, body):
-    thread = threading.Thread(target=callback, args=(ch, method, properties, body))
-    thread.start()
-
 if __name__ == '__main__':
     rabbit = Rabbit('convert')
-    rabbit.consume(callback_thread)
+    rabbit.consume(callback)
 
     LOG.info(' [*] Waiting for Job.')
     rabbit.start_consuming()
