@@ -25,19 +25,22 @@ LOG.basicConfig(
 
 # resolution 360, 720, 1048
 RESOLUTIONS = {360: '640:360', 720: '1280:720', 1080: '1920:1080'}
+BASE_VIDEOS_FOLDER = './videos'
+BASE_VIDEO_URL = 'http://68.183.230.156:3030/hls'
+
 
 def get_input_output_location(video_id, filename, resolution):
     fname, extension = os.path.splitext(filename)
 
-    video_folder = f'./videos/{video_id}'
+    video_folder = f'{BASE_VIDEOS_FOLDER}/{video_id}'
     input_file = f'{video_folder}/{filename}'
 
-    output_file = f'{video_folder}/{fname}_{resolution}{extension}'
-    return input_file, output_file
+    output_name = f'{fname}_{resolution}{extension}'
+    output_file = f'{video_folder}/{output_name}'
+    return input_file, output_file, output_name
 
 def convert_video_resolution(video_id, filename, resolution):
-
-    input_file, output_file = get_input_output_location(video_id, filename, resolution)
+    input_file, output_file, _ = get_input_output_location(video_id, filename, resolution)
 
     pixel_dimension = RESOLUTIONS.get(resolution)
     LOG.info(f'Converting {output_file}')
@@ -46,16 +49,18 @@ def convert_video_resolution(video_id, filename, resolution):
     return success == 0
 
 def update_video_resolution_in_db(video_id, filename, resolution):
-    _, output_file = get_input_output_location(video_id, filename, resolution)
     LOG.info(f'Updating resolution in mongo')
+    _, _, output_name = get_input_output_location(video_id, filename, resolution)
 
     db_resolution = {
-        'resolution': resolution,
-        'location': output_file
+        'src': f'{BASE_VIDEO_URL}/{output_name},.urlset/master.m3u8',
+        'type': 'application/x-mpegURL',
+        'label': str(resolution),
+        'res': resolution
     }
     collection.find_one_and_update(
         {'video_id': video_id},
-        {'$push': {'resolutions': db_resolution}}
+        {'$push': {'source': db_resolution}}
     )
 
 def run_convert_task(data):
