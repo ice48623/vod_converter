@@ -26,7 +26,7 @@ LOG.basicConfig(
 # resolution 360, 720, 1048
 RESOLUTIONS = {360: '640:360', 720: '1280:720', 1080: '1920:1080'}
 BASE_VIDEOS_FOLDER = './videos'
-BASE_VIDEO_URL = 'http://68.183.230.156:3030/hls'
+BASE_VIDEO_URL = 'http://localhost:4000/hls'
 
 
 def get_input_output_location(video_id, filename, resolution):
@@ -53,7 +53,7 @@ def update_video_resolution_in_db(video_id, filename, resolution):
     _, _, output_name = get_input_output_location(video_id, filename, resolution)
 
     db_resolution = {
-        'src': f'{BASE_VIDEO_URL}/{output_name},.urlset/master.m3u8',
+        'src': f'{BASE_VIDEO_URL}/{video_id}/{output_name},.urlset/master.m3u8',
         'type': 'application/x-mpegURL',
         'label': str(resolution),
         'res': resolution
