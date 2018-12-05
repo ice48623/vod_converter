@@ -25,7 +25,7 @@ LOG.basicConfig(
 
 # resolution 360, 720, 1048
 RESOLUTIONS = {360: '640:360', 720: '1280:720', 1080: '1920:1080'}
-BASE_VIDEOS_FOLDER = './videos'
+BASE_VIDEOS_FOLDER = os.getenv('BASE_VIDEOS_FOLDER', './videos')
 BASE_VIDEO_URL = os.getenv('BASE_VIDEO_URL', 'http://localhost:4000')
 
 
